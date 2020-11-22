@@ -96,39 +96,39 @@ private:
 };
 
 
-    class HandlersRegistry : public AsyncCallHandlerRegistry {
+class HandlerRegistry : public AsyncCallHandlerRegistry {
 
-    public:
+public:
 
-        HandlersRegistry()
-         : handlers_(), nextId_(0) {}
+    HandlerRegistry()
+        : handlers_(), nextId_(0) {}
 
+    
+    virtual std::pair<int, AsyncCallHandlerInterface*> Register(AsyncCallHandlerInterface* item) override{
+        int id = nextId_++;
+        auto it = handlers_.emplace(id, item);
+        it.first->second->SetRegistry(this,  id);
+        it.first->second->Proceed(); // Initializes the handler
+        return std::make_pair(id, it.first->second.get()); 
+    }
 
-        virtual std::pair<int, AsyncCallHandlerInterface*> Register(AsyncCallHandlerInterface* item) override {
-            int id = nextId_++;
-            auto it = handlers_.emplace(id, item);
-            it.first->second->SetRegistry(this,  id);
-            it.first->second->Proceed(); // Initializes the handler
-            return std::make_pair(id, it.first->second.get()); 
+    virtual void Unregister(int registerId) override {
+        handlers_.erase(registerId);
+    }
+    
+    bool TryLookupById(int id, AsyncCallHandlerInterface** out) {
+        auto it = handlers_.find(id);
+        if (it == handlers_.end()) {
+            return false;
         }
+        *out = it->second.get();
+        return true;
+    }
 
-        virtual void Unregister(int registerId) override {
-            handlers_.erase(registerId);
-        }
-        
-        bool TryLookupById(int id, AsyncCallHandlerInterface** out) {
-            auto it = handlers_.find(id);
-            if (it == handlers_.end()) {
-                return false;
-            }
-            *out = it->second.get();
-            return true;
-        }
-
-    private:
-        std::unordered_map<int, std::unique_ptr<AsyncCallHandlerInterface>> handlers_;
-        int nextId_;
-    };
+private:
+    std::unordered_map<int, std::unique_ptr<AsyncCallHandlerInterface>> handlers_;
+    int nextId_;
+};
 
 
 #endif /* SRC_ASYNC_CALL_HANDLER_H_ */

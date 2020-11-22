@@ -10,7 +10,7 @@ using hellostreamingworld::MultiGreeter;
 
 class MultiGreeterService : public MultiGreeter::AsyncService {
 public:
-    void BuildAsyncHandlers(HandlersRegistry* registry, grpc::ServerCompletionQueue* cq);        
+    void BuildAsyncHandlers(HandlerRegistry* registry, grpc::ServerCompletionQueue* cq);
 };
 
 

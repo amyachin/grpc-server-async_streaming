@@ -48,15 +48,27 @@ find_package(Threads)
   endif()
 
 
-# Proto file
+
+# Proto file (hellowstreaming world)
 get_filename_component(hw_proto "./protos/hellostreamingworld.proto" ABSOLUTE)
 get_filename_component(hw_proto_path "${hw_proto}" PATH)
+
+# Proto file (chatroom)
+get_filename_component(cr_proto "./protos/chatroom.proto" ABSOLUTE)
+get_filename_component(cr_proto_path "${cr_proto}" PATH)
+
 
 # Generated sources
 set(hw_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.pb.cc")
 set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.pb.h")
 set(hw_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.grpc.pb.cc")
 set(hw_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.grpc.pb.h")
+
+set(cr_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/chatroom.pb.cc")
+set(cr_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/chatroom.pb.h")
+set(cr_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/chatroom.grpc.pb.cc")
+set(cr_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/chatroom.grpc.pb.h")
+
 add_custom_command(
       OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
       COMMAND ${_PROTOBUF_PROTOC}
@@ -67,17 +79,34 @@ add_custom_command(
         "${hw_proto}"
       DEPENDS "${hw_proto}")
 
+
+add_custom_command(
+      OUTPUT "${cr_proto_srcs}" "${cr_proto_hdrs}" "${cr_grpc_srcs}" "${cr_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        -I "${cr_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${cr_proto}"
+      DEPENDS "${cr_proto}")
+
+
+
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
-file(GLOB_RECURSE TARGET_SOURCES_SERVER ${CMAKE_CURRENT_LIST_DIR}/MultiGreeterServer/*.cpp)
-file(GLOB_RECURSE TARGET_SOURCES_CLIENT ${CMAKE_CURRENT_LIST_DIR}/MultiGreeterClient/*.cpp)
-
-add_executable(helloworld-streaming-server ${TARGET_SOURCES_SERVER}
+add_executable(helloworld-streaming-client "multi_greeter_client.cpp"
     ${hw_proto_srcs}
     ${hw_grpc_srcs})
 
-add_executable(helloworld-streaming-client ${TARGET_SOURCES_CLIENT}
+
+target_link_libraries(helloworld-streaming-client
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF})
+
+
+add_executable(helloworld-streaming-server "multi_greeter_server.cpp" "multi_greeter_service.cpp"
     ${hw_proto_srcs}
     ${hw_grpc_srcs})
 
@@ -86,9 +115,12 @@ target_link_libraries(helloworld-streaming-server
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})
 
+add_executable(chatroom-server "chatroom_server.cpp"
+    ${cr_proto_srcs}
+    ${cr_grpc_srcs})
 
-target_link_libraries(helloworld-streaming-client
+
+target_link_libraries(chatroom-server
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})
-

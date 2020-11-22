@@ -103,8 +103,7 @@ public:
 
 
 void MultiGreeterService:: BuildAsyncHandlers (
-    HandlersRegistry* registry,
-     grpc::ServerCompletionQueue* cq
+    HandlerRegistry* registry, grpc::ServerCompletionQueue* cq
 ) {
     registry->Register(new SayHelloStreamingHandler(this, cq));
 }

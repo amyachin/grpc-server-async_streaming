@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_package = "ex.grpc";
+option objc_class_prefix = "HSW";
+
+package chatroom;
+
+service ChatRoom {
+    rpc chat (stream OutboundMessage) returns (stream InboundMessage) {}
+    rpc registerUser (RegistrationRequest) returns (RegistrationReply) {}
+    rpc listUsers(ListUsersRequest) returns (ListUsersResponse) {}
+}
+
+message ListUsersRequest {
+
+}
+
+message ListUsersResponse {
+    
+}
+
+message RegistrationRequest {
+
+}
+
+message RegistrationReply {
+
+}
+
+message OutboundMessage {
+    string message = 2;
+    repeated string recipients = 1;
+}
+
+message InboundMessage {
+    string sender = 1;
+    string message = 2;
+}

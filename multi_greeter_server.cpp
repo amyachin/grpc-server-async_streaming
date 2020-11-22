@@ -60,7 +60,7 @@ public:
 
     void HandleRpcs() {
 
-        HandlersRegistry registry;
+        HandlerRegistry registry;
         std::vector<std::unique_ptr<AsyncCallHandlerInterface>> handlers;
         service_.BuildAsyncHandlers(&registry, cq_.get());
         
@@ -68,16 +68,17 @@ public:
         void* tag;  // uniquely identifies a request.
         bool ok;
         // Block waiting to read the next event from the completion queue. The
-        // event is uniquely identified by its tag, which in this case is the
-        // memory address of a CallData instance.
+        // event is uniquely identified by its tag.
         // The return value of Next should always be checked. This return value
         // tells us whether there is any kind of event or cq_ is shutting down.
         while (cq_->Next(&tag, &ok)) {
             
-            // Assuming that 
+            // Id assigned by registry  
             int id = reinterpret_cast<intptr_t>(tag);
 
             if (!ok) {
+                // Call has been cancelled by the client or the connection was lost
+                // Handler cannot make any progress so we unregister it 
                 std::cout << "Tag " << id << " - completion queue did not succeed, unregistering the handler";
                 registry.Unregister(id);
                 continue; 

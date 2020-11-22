@@ -7,15 +7,18 @@ else()
   add_definitions(-D_WIN32_WINNT=0x600)
 endif()
 
-
 include(CTest)
 enable_testing()
-
-add_executable(helloworld-streaming main.cpp)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
+find_package(Threads)
+ message(STATUS "Using threading library ${CMAKE_THREAD_LIBS_INIT}")
+
+# find_package(TBB CONFIG REQUIRED)
+#  message(STATUS "Using TBB ${TBB_VERSION}")
 
 
 # Find Protobuf installation
@@ -48,3 +51,44 @@ include(CPack)
 # Proto file
 get_filename_component(hw_proto "./protos/hellostreamingworld.proto" ABSOLUTE)
 get_filename_component(hw_proto_path "${hw_proto}" PATH)
+
+# Generated sources
+set(hw_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.pb.cc")
+set(hw_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.pb.h")
+set(hw_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.grpc.pb.cc")
+set(hw_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/hellostreamingworld.grpc.pb.h")
+add_custom_command(
+      OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+      COMMAND ${_PROTOBUF_PROTOC}
+      ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+        --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+        -I "${hw_proto_path}"
+        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+        "${hw_proto}"
+      DEPENDS "${hw_proto}")
+
+# Include generated *.pb.h files
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+
+file(GLOB_RECURSE TARGET_SOURCES_SERVER ${CMAKE_CURRENT_LIST_DIR}/MultiGreeterServer/*.cpp)
+file(GLOB_RECURSE TARGET_SOURCES_CLIENT ${CMAKE_CURRENT_LIST_DIR}/MultiGreeterClient/*.cpp)
+
+add_executable(helloworld-streaming-server ${TARGET_SOURCES_SERVER}
+    ${hw_proto_srcs}
+    ${hw_grpc_srcs})
+
+add_executable(helloworld-streaming-client ${TARGET_SOURCES_CLIENT}
+    ${hw_proto_srcs}
+    ${hw_grpc_srcs})
+
+target_link_libraries(helloworld-streaming-server
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF})
+
+
+target_link_libraries(helloworld-streaming-client
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF})
+

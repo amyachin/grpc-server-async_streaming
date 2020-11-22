@@ -29,7 +29,8 @@ service MultiGreeter {
 // they want.
 message HelloRequest {
   string name = 1;
-  string num_greetings = 2;
+  int32 num_greetings = 2;
+  int32 pauseInMilliseconds = 3;
 }
 
 // A response message containing a greeting

@@ -402,7 +402,17 @@ public:
 
     void BroadcastMessage(int sessionId, const std::string& message) {
         
+
+        auto it = sessions_.find(sessionId);
+
+        if (it == sessions_.end()) {
+            return;
+        }
+
         auto  msg = std::make_shared<InboundMessage>();
+        msg->mutable_message()->set_message(message);
+        msg->mutable_message()->set_sender(it->second.userName);
+
         for(auto& t : sessions_){
             if (t.first != sessionId && t.second.listener != nullptr) {
                 t.second.listener->PostMessage(msg);

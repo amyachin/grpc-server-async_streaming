@@ -2,7 +2,6 @@
 #define SRC_ASYNC_CALL_HANDLER_H_
 
 #include <memory>
-#include <type_traits>
 #include <unordered_map>
 
 struct AsyncCallHandlerRegistry;
@@ -18,24 +17,6 @@ struct AsyncCallHandlerRegistry {
     virtual void Unregister(int registerId) = 0;
 };
 
-namespace details {
-    template<typename T>
-    T* CloneObject(T* source, std::true_type tag) {
-        return new T(*source);
-    }
-
-    template < typename T>
-    T* CloneObject(T* source, std::false_type tag) {
-        return static_cast<T*>(source->Clone());
-    }
-}
-
-template < typename T >
-std::unique_ptr<AsyncCallHandlerInterface> CloneCallHandler(T* source) {
-    T* p = details::CloneObject(source, typename std::is_copy_constructible<T>::type());
-    return std::unique_ptr<AsyncCallHandlerInterface>(static_cast<AsyncCallHandlerInterface*>(p));    
-}
-
 template < typename T >
 class AsyncCallHandler : public AsyncCallHandlerInterface  {
 public:
@@ -49,16 +30,6 @@ public:
         : id_(-1), registry_(nullptr) {
     }
  
-    // Creates a new registered instance of this handler type
-    // Registration is not thread safe and is meant to be called from CQ thread
-    //   
-    std::pair<int, T*> RegisterCopy() {
-
-        auto p = CloneCallHandler(static_cast<T*>(this));
-        auto pair = registry_->Register(p.release());
-        return std::make_pair(pair.first, static_cast<T*>(pair.second)); 
-    }
-
     // Unsubscribes and invalidates the instance of this handler
     // Must be the last method to call
     void Unregister()  {

@@ -115,7 +115,7 @@ target_link_libraries(helloworld-streaming-server
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF})
 
-add_executable(chatroom-server "chatroom_server.cpp"
+add_executable(chatroom-server "chatroom_server.cpp"  "chatroom_service.cpp"
     ${cr_proto_srcs}
     ${cr_grpc_srcs})
 

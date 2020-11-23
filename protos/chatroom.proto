@@ -7,7 +7,6 @@ package chatroom;
 
 service ChatRoom {
     rpc chat (stream OutboundMessage) returns (stream InboundMessage) {}
-    rpc registerUser (RegistrationRequest) returns (RegistrationReply) {}
     rpc listUsers(ListUsersRequest) returns (ListUsersResponse) {}
 }
 
@@ -16,11 +15,11 @@ message ListUsersRequest {
 }
 
 message ListUsersResponse {
-    
+    repeated string usernames = 1;       
 }
 
 message RegistrationRequest {
-
+    string name = 1;
 }
 
 message RegistrationReply {
@@ -28,11 +27,44 @@ message RegistrationReply {
 }
 
 message OutboundMessage {
-    string message = 2;
-    repeated string recipients = 1;
+
+    message RegistrationEvent {
+        string userName = 1;
+    }
+
+    message TextMessage {
+        string message = 1;
+    }
+
+    oneof test_one_of {
+        RegistrationEvent event = 1;
+        TextMessage message = 2;
+    }
+
 }
 
 message InboundMessage {
-    string sender = 1;
-    string message = 2;
+
+    message ConnectionEvent {
+        
+        enum Status {
+            ENTERED = 0;
+            LEFT = 1;
+        }
+        
+        string username = 1;
+        Status status = 2;
+    }
+
+    message TextMessage {
+        string sender = 1;
+        string message = 2;
+        repeated string recipients = 3;
+    }
+
+    oneof test_one_of {
+        ConnectionEvent event = 1;
+        TextMessage message = 2;
+    }
+    
 }

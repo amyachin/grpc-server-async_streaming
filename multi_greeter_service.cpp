@@ -23,10 +23,6 @@ public:
             
     }
 
-    SayHelloStreamingHandler* Clone() {
-        return new SayHelloStreamingHandler(service_, cq_);
-    }   
-
     virtual void Proceed() override {
 
         if (state_ == CREATED) {
@@ -37,8 +33,8 @@ public:
         } else if (state_ == PROCESS) {
             // Request has been recieved
             state_ = REPLYING;
-            // Register another handler for  new calls
-            RegisterCopy();   
+            // Register another instance for new calls
+            registry()->Register(new SayHelloStreamingHandler(service_, cq_));   
             currentReply_ = 1;
 
             ostringstream os;
